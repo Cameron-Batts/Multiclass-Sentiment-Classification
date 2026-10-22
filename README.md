@@ -51,7 +51,7 @@ The three-class label mapping is subjective. Negation/emoticons may be lost in p
 CrowdFlower: https://data.world/crowdflower/sentiment-analysis-in-text . Retain source attribution and observe applicable data terms.
 
 ## Files
-- `notebooks/multiclass_sentiment_classification.ipynb`: cleaned analysis and original numerical outputs.
+- `notebooks/multiclass_sentiment_classification.ipynb`: analysis and fresh validation outputs.
 - `reports/multiclass_sentiment_classification.html`: readable report.
 - `reports/model_comparison.csv`: baseline test metrics.
 - `data/emotion_counts.csv`: aggregate original emotion counts.
