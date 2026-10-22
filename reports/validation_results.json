@@ -1,0 +1,161 @@
+{
+  "observations": 40000,
+  "test_rows": 8000,
+  "vocabulary_size": 42633,
+  "models": {
+    "Naive Bayes": {
+      "-1": {
+        "precision": 0.5430831729741287,
+        "recall": 0.7957393483709273,
+        "f1-score": 0.645571228872792,
+        "support": 3192.0
+      },
+      "0": {
+        "precision": 0.44755244755244755,
+        "recall": 0.11824480369515011,
+        "f1-score": 0.18706613080014614,
+        "support": 2165.0
+      },
+      "1": {
+        "precision": 0.5888767720828789,
+        "recall": 0.6129398410896708,
+        "f1-score": 0.6006674082313682,
+        "support": 2643.0
+      },
+      "accuracy": 0.552,
+      "macro avg": {
+        "precision": 0.5265041308698184,
+        "recall": 0.5089746643852494,
+        "f1-score": 0.4777682559681021,
+        "support": 8000.0
+      },
+      "weighted avg": {
+        "precision": 0.5323592307124395,
+        "recall": 0.552,
+        "f1-score": 0.5066531869624719,
+        "support": 8000.0
+      }
+    },
+    "Logistic regression": {
+      "-1": {
+        "precision": 0.6049883990719258,
+        "recall": 0.6535087719298246,
+        "f1-score": 0.6283132530120482,
+        "support": 3192.0
+      },
+      "0": {
+        "precision": 0.42309606769537084,
+        "recall": 0.39260969976905313,
+        "f1-score": 0.40728318160038335,
+        "support": 2165.0
+      },
+      "1": {
+        "precision": 0.6087298466378294,
+        "recall": 0.5856980703745743,
+        "f1-score": 0.5969919012726571,
+        "support": 2643.0
+      },
+      "accuracy": 0.5605,
+      "macro avg": {
+        "precision": 0.545604771135042,
+        "recall": 0.5439388473578174,
+        "f1-score": 0.5441961119616963,
+        "support": 8000.0
+      },
+      "weighted avg": {
+        "precision": 0.5569998676327309,
+        "recall": 0.5605,
+        "f1-score": 0.5581491983553651,
+        "support": 8000.0
+      }
+    },
+    "TextBlob fixed": {
+      "-1": {
+        "precision": 0.7581329561527581,
+        "recall": 0.16791979949874686,
+        "f1-score": 0.2749422928956143,
+        "support": 3192.0
+      },
+      "0": {
+        "precision": 0.31031290501758935,
+        "recall": 0.7741339491916859,
+        "f1-score": 0.4430346286016389,
+        "support": 2165.0
+      },
+      "1": {
+        "precision": 0.5798097251585623,
+        "recall": 0.41505864547862276,
+        "f1-score": 0.4837927232635061,
+        "support": 2643.0
+      },
+      "accuracy": 0.413625,
+      "macro avg": {
+        "precision": 0.5494185287763033,
+        "recall": 0.45237079805635183,
+        "f1-score": 0.4005898815869197,
+        "support": 8000.0
+      },
+      "weighted avg": {
+        "precision": 0.5780281173745957,
+        "recall": 0.413625,
+        "f1-score": 0.38943124217884945,
+        "support": 8000.0
+      }
+    },
+    "TextBlob validation-selected": {
+      "-1": {
+        "precision": 0.6901217861975643,
+        "recall": 0.31954887218045114,
+        "f1-score": 0.43683083511777304,
+        "support": 3192.0
+      },
+      "0": {
+        "precision": 0.3603550295857988,
+        "recall": 0.5625866050808314,
+        "f1-score": 0.43931469792605954,
+        "support": 2165.0
+      },
+      "1": {
+        "precision": 0.5155951623169955,
+        "recall": 0.6129398410896708,
+        "f1-score": 0.5600691443388073,
+        "support": 2643.0
+      },
+      "accuracy": 0.48225,
+      "macro avg": {
+        "precision": 0.5220239927001195,
+        "recall": 0.49835843945031777,
+        "f1-score": 0.47873822579421327,
+        "support": 8000.0
+      },
+      "weighted avg": {
+        "precision": 0.5432194243249624,
+        "recall": 0.48225,
+        "f1-score": 0.4782178868991648,
+        "support": 8000.0
+      }
+    }
+  },
+  "validation_selected_thresholds": [
+    -0.0499999999999996,
+    0.1
+  ],
+  "threshold_validation_weighted_f1": 0.4756474782293543,
+  "checked_at_utc": "2026-10-22T21:54:59.772753+00:00",
+  "python": "3.12.14",
+  "versions": {
+    "numpy": "2.3.5",
+    "pandas": "2.2.3",
+    "scikit-learn": "1.8.0",
+    "nltk": "3.10.4",
+    "textblob": "0.20.1"
+  },
+  "executed_code_cells": 18,
+  "generated_figures": 0,
+  "elapsed_seconds": 8.627266883850098,
+  "input_sha256": {
+    "data/emotion_counts.csv": "1f23472144c351514c1dbeba7648c1394dfbc437326c6c92fd249cfb05300c75",
+    "data/text_emotion.csv": "b506deae0e0753f9276327b38a1b2ce31e43e5cc680a3db9c5283b16c5cd5d16"
+  },
+  "scope": "Full notebook rerun including validation-only threshold selection; original non-stratified test split and preprocessing retained. No patient data."
+}

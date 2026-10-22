@@ -1,0 +1,38 @@
+[
+  {
+    "name": "twitter_samples",
+    "revision": "550b6625bcef1f2abff2ff770a5a0d272c9c6b2a",
+    "sha256": "aac71c20e1e05003b7812321936c5635dfede61902aca2b94419a1124979c6dd",
+    "bytes": 16007673
+  },
+  {
+    "name": "vader_lexicon",
+    "revision": "550b6625bcef1f2abff2ff770a5a0d272c9c6b2a",
+    "sha256": "8adba4294eef3964d820bf655e37e61bdc3a341994356af59b74fb3b4a36ce5c",
+    "bytes": 90486
+  },
+  {
+    "name": "stopwords",
+    "revision": "550b6625bcef1f2abff2ff770a5a0d272c9c6b2a",
+    "sha256": "48c0e52d8b52546e827f53761fb30300c0ab94f70660d28bd65ba0a86270946b",
+    "bytes": 37733
+  },
+  {
+    "name": "movie_reviews",
+    "revision": "550b6625bcef1f2abff2ff770a5a0d272c9c6b2a",
+    "sha256": "a41211ae685019137410268134db6a1a14428c89b671eb83056151a878539008",
+    "bytes": 4004848
+  },
+  {
+    "name": "wordnet",
+    "revision": "550b6625bcef1f2abff2ff770a5a0d272c9c6b2a",
+    "sha256": "cbda5ea6eef7f36a97a43d4a75f85e07fccbb4f23657d27b4ccbc93e2646ab59",
+    "bytes": 10775600
+  },
+  {
+    "name": "averaged_perceptron_tagger_eng",
+    "revision": "550b6625bcef1f2abff2ff770a5a0d272c9c6b2a",
+    "sha256": "6025f530624335c67d6547d44757b357b4e79bae030a0383e9887a92c1718f0b",
+    "bytes": 1539115
+  }
+]

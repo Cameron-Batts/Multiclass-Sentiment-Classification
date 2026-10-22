@@ -1,153 +1,105 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Multi-Class Sentiment Classification | Cameron Batts</title><style>body{margin:0;background:#f7f8fa;color:#152540;font:16px/1.65 system-ui}main{max-width:950px;margin:auto;padding:32px 24px}h1{font: bold 2.4rem Georgia}h2{border-bottom:2px solid #e8c97a;margin-top:36px}pre{padding:18px;background:white;border-left:3px solid #c9a84c;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}details{margin:16px 0}summary{cursor:pointer}table{width:100%;border-collapse:collapse;font-size:14px}td,th{text-align:left;padding:10px;border-bottom:1px solid #ddd}p{overflow-wrap:anywhere}a{color:#1a3560}</style><main><a href="/">← Portfolio</a><table><thead><tr><th>Model</th><th>Weighted precision</th><th>Weighted recall</th><th>Weighted F1</th></tr></thead><tbody><tr><td>Naive Bayes</td><td>0.5324</td><td>0.5520</td><td>0.5067</td></tr><tr><td>Logistic regression</td><td>0.5567</td><td>0.5604</td><td>0.5579</td></tr><tr><td>TextBlob (±0.33)</td><td>0.5780</td><td>0.4136</td><td>0.3894</td></tr></tbody></table><h1>Multi-Class Sentiment Classification</h1><p><strong>Cameron Batts</strong></p><p>Python · NLP · Bag of Words · Naive Bayes · Logistic Regression · TextBlob</p><h2>Overview</h2><p>Compare three sentiment classifiers on 40,000 social-media posts with 13 original emotion labels mapped to negative, neutral, and positive classes. The workflow includes preprocessing, training-only vocabulary fitting, an 80/20 split, and class-level evaluation.</p><p>Selected numerical outputs come from the completed original run. The cleaned workflow has been syntax-checked but not re-executed. The optional validation-based threshold search below is revised code and has no reported result.</p><h2>Data source</h2><p>CrowdFlower sentiment analysis in text: https://data.world/crowdflower/sentiment-analysis-in-text . Source attribution is retained. Raw text and author identifiers are not included in this repository. Place a permitted local copy of `text_emotion.csv` in `data/` before running; only `sentiment` and `content` columns are needed. The dataset contains third-party names in its source text; no source-text examples are displayed here.</p><details><summary>Python code</summary><pre>from pathlib import Path
-import re
-import numpy as np
-import pandas as pd
-import nltk
-from nltk.corpus import stopwords as nltk_stopwords
-from textblob import TextBlob
-from sklearn.metrics import precision_score, recall_score, f1_score
-from sklearn import naive_bayes
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction import text
-
-nltk.download(&#x27;stopwords&#x27;, quiet=True)
-stopwords = nltk_stopwords.words(&#x27;english&#x27;)
-project_root = Path.cwd().parent if Path.cwd().name == &#x27;notebooks&#x27; else Path.cwd()
-data_path = project_root / &#x27;data&#x27; / &#x27;text_emotion.csv&#x27;
-emotion_raw_csv = pd.read_csv(data_path, usecols=[&#x27;sentiment&#x27;, &#x27;content&#x27;])
-assert emotion_raw_csv[&#x27;content&#x27;].notna().all(), &#x27;Missing content must be reviewed.&#x27;
-print(&#x27;Rows:&#x27;, len(emotion_raw_csv))
-</pre></details><h2>Label mapping</h2><p>Positive: enthusiasm, love, fun, happiness, relief. Negative: empty, sadness, worry, hate, boredom, anger. Neutral: neutral and surprise.</p><p>This mapping is an analytical choice. Surprise can carry either polarity, and treating empty as negative can introduce label ambiguity.</p><details><summary>Python code</summary><pre>emotions_dict = {
-    &#x27;empty&#x27;: -1,
-    &#x27;sadness&#x27;: -1,
-    &#x27;enthusiasm&#x27;: 1,
-    &#x27;neutral&#x27;: 0,
-    &#x27;worry&#x27;: -1,
-    &#x27;surprise&#x27;: 0,
-    &#x27;love&#x27;: 1,
-    &#x27;fun&#x27;: 1,
-    &#x27;hate&#x27;: -1,
-    &#x27;happiness&#x27;: 1,
-    &#x27;boredom&#x27;: -1,
-    &#x27;relief&#x27;: 1,
-    &#x27;anger&#x27;: -1
-    }</pre></details><details><summary>Python code</summary><pre>emotion_raw_csv[&#x27;y&#x27;] = emotion_raw_csv[&#x27;sentiment&#x27;].map(emotions_dict)
-assert emotion_raw_csv[&#x27;y&#x27;].notna().all(), &#x27;Unexpected emotion labels.&#x27;
-y = emotion_raw_csv[&#x27;y&#x27;]
-print(y.value_counts().sort_index())
-</pre></details><h2>Preprocessing and split</h2><p>The baseline lowercases text, removes HTTP URLs, punctuation and numbers, and removes NLTK English stopwords. It does not explicitly remove complete @mentions: stripping punctuation can leave username tokens. Removing negation and emoticons may discard useful sentiment cues. These choices are retained to match the original experiment.</p><p>The original split uses `random_state=42` and a 20% test set, without stratification. The vectorizer is fit only on training text.</p><details><summary>Python code</summary><pre>def preprocess(text):
-    # lowercase all text
-    text = text.lower()
-    # remove URLs
-    text = re.sub(r&#x27;http\S+&#x27;, &#x27;&#x27;, text)
-    # remove punctuation and numbers
-    text = re.sub(r&#x27;[^a-z\s]&#x27;, &#x27;&#x27;, text)
-    # split into words and remove stopwords
-    tokens = text.split()
-    tokens = [word for word in tokens if word not in stopwords]
-    return &#x27; &#x27;.join(tokens)
-
-emotion_raw_csv[&#x27;processed_content&#x27;] = emotion_raw_csv[&#x27;content&#x27;].apply(preprocess)
-
-</pre></details><details><summary>Python code</summary><pre>X_train, X_test, y_train, y_test = train_test_split(
-    emotion_raw_csv[&#x27;processed_content&#x27;], y, test_size=0.2, random_state=42)
-</pre></details><details><summary>Python code</summary><pre>vectorizer = text.CountVectorizer(stop_words=stopwords)
-</pre></details><details><summary>Python code</summary><pre># You fit and transform your training text and just transform the test text
-# fit_transform builds the dictionary and transforms the text
-# transform function uses the existing dictionary to transform text
-# You must use the same dictionary or else the model shape will not match
-X_train_vectors = vectorizer.fit_transform(X_train)
-X_test_vectors = vectorizer.transform(X_test)</pre></details><details><summary>Python code</summary><pre>print(len(vectorizer.get_feature_names_out()))
-</pre></details><pre>42633
-</pre><h2>Naive Bayes</h2><p>Evaluate per-class metrics in the order negative, neutral, positive.</p><details><summary>Python code</summary><pre>model = naive_bayes.MultinomialNB()
-model.fit(X_train_vectors, y_train)
-y_pred = model.predict(X_test_vectors)
-</pre></details><details><summary>Python code</summary><pre># Get our performance metrics, precision, recall, F1
-
-precision_class = precision_score(y_test, y_pred, average=None, zero_division=0.0)
-recall_class = recall_score(y_test, y_pred, average=None, zero_division=0.0)
-f1_class = f1_score(y_test, y_pred, average=None, zero_division=0.0)
-
-print(&quot;{:=^50s}&quot;.format(&quot;Naive-Bayes Performance by Class (entries are ordered as negative, neutral and positive)&quot;))
-
-# Output results by class
-print(&quot;Precision:&quot;, precision_class)
-print(&quot;Recall:&quot;, recall_class)
-print(&quot;F1 Score:&quot;, f1_class)</pre></details><pre>Naive-Bayes Performance by Class (entries are ordered as negative, neutral and positive)
-Precision: [0.54308317 0.44755245 0.58887677]
-Recall: [0.79573935 0.1182448  0.61293984]
-F1 Score: [0.64557123 0.18706613 0.60066741]
-</pre><details><summary>Python code</summary><pre>precision_w = precision_score(y_test, y_pred, average=&#x27;weighted&#x27;, zero_division=0.0)
-recall_w = recall_score(y_test, y_pred, average=&#x27;weighted&#x27;, zero_division=0.0)
-f1_w = f1_score(y_test, y_pred, average=&#x27;weighted&#x27;, zero_division=0.0)
-
-print(&quot;Weighted Precision:&quot;, precision_w)
-print(&quot;Weighted Recall:&quot;, recall_w)
-print(&quot;Weighted F1 Score:&quot;, f1_w)
-</pre></details><pre>Weighted Precision: 0.5323592307124395
-Weighted Recall: 0.552
-Weighted F1 Score: 0.5066531869624719
-</pre><h2>Logistic regression</h2><p>Use the same split and representation for a direct comparison.</p><details><summary>Python code</summary><pre>lr_model = LogisticRegression(max_iter=1000)
-lr_model.fit(X_train_vectors, y_train)
-y_pred_lr = lr_model.predict(X_test_vectors)
-</pre></details><details><summary>Python code</summary><pre>precision_class = precision_score(y_test, y_pred_lr, average=None, zero_division=0.0)
-recall_class = recall_score(y_test, y_pred_lr, average=None, zero_division=0.0)
-f1_class = f1_score(y_test, y_pred_lr, average=None, zero_division=0.0)
-
-print(&quot;Precision:&quot;, precision_class)
-print(&quot;Recall:&quot;, recall_class)
-print(&quot;F1 Score:&quot;, f1_class)
-</pre></details><pre>Precision: [0.60491329 0.42228886 0.60850729]
-Recall: [0.65570175 0.39030023 0.584563  ]
-F1 Score: [0.62928443 0.40566491 0.59629487]
-</pre><details><summary>Python code</summary><pre>precision_w = precision_score(y_test, y_pred_lr, average=&#x27;weighted&#x27;, zero_division=0.0)
-recall_w = recall_score(y_test, y_pred_lr, average=&#x27;weighted&#x27;, zero_division=0.0)
-f1_w = f1_score(y_test, y_pred_lr, average=&#x27;weighted&#x27;, zero_division=0.0)
-
-print(&quot;Weighted Precision:&quot;, precision_w)
-print(&quot;Weighted Recall:&quot;, recall_w)
-print(&quot;Weighted F1 Score:&quot;, f1_w)
-</pre></details><pre>Weighted Precision: 0.5566779208858396
-Weighted Recall: 0.560375
-Weighted F1 Score: 0.5578684677938621
-</pre><h2>TextBlob baseline</h2><p>Classify polarity below −0.33 as negative, above +0.33 as positive, and the remainder as neutral. Apply TextBlob to the same processed test text.</p><details><summary>Python code</summary><pre>y_pred_textblob_score = X_test.apply(lambda x: TextBlob(str(x)).sentiment[0])</pre></details><details><summary>Python code</summary><pre>def classify_textblob(score):
-    if score &gt; 0.33:
-        return 1
-    elif score &lt; -0.33:
-        return -1
-    else:
-        return 0
-
-y_pred_textblob = y_pred_textblob_score.apply(classify_textblob)
-</pre></details><details><summary>Python code</summary><pre>precision_w = precision_score(y_test, y_pred_textblob, average=&#x27;weighted&#x27;, zero_division=0.0)
-recall_w = recall_score(y_test, y_pred_textblob, average=&#x27;weighted&#x27;, zero_division=0.0)
-f1_w = f1_score(y_test, y_pred_textblob, average=&#x27;weighted&#x27;, zero_division=0.0)
-
-print(&quot;Weighted Precision:&quot;, precision_w)
-print(&quot;Weighted Recall:&quot;, recall_w)
-print(&quot;Weighted F1 Score:&quot;, f1_w)
-</pre></details><pre>Weighted Precision: 0.5780281173745957
-Weighted Recall: 0.413625
-Weighted F1 Score: 0.38943124217884945
-</pre><h2>Test-set findings</h2><p>Logistic regression has the highest weighted F1 among these three evaluated configurations: 0.5579 versus 0.5067 for Naive Bayes and 0.3894 for TextBlob. Its neutral-class F1 is 0.4057 compared with 0.1871 for Naive Bayes. Naive Bayes has slightly higher negative-class F1 (0.6456 versus 0.6293).</p><p>The result supports logistic regression for this experiment, not a universal claim about imbalanced text datasets. Accuracy remains modest, and the single random split provides no uncertainty interval.</p><h2>Optional extension: validation-based TextBlob thresholds</h2><p>The original optional search evaluated thresholds on training labels and coupled the positive cutoff with the magnitude of the negative cutoff. This revision independently searches negative and positive thresholds using a held-out portion of the training set. The test set is used only after selecting thresholds. This extension has not been executed; its results must not be confused with the baseline test metrics above.</p><details><summary>Python code</summary><pre>from itertools import product
-threshold_train, threshold_valid, labels_train, labels_valid = train_test_split(
-    X_train, y_train, test_size=0.2, random_state=42, stratify=y_train)
-valid_scores = threshold_valid.apply(lambda value: TextBlob(str(value)).sentiment.polarity).to_numpy()
-best_score = -1.0
-best_thresholds = None
-for negative_cutoff, positive_cutoff in product(np.arange(-0.55, 0, 0.05), np.arange(0.05, 0.60, 0.05)):
-    predictions = np.where(valid_scores &gt; positive_cutoff, 1,
-                           np.where(valid_scores &lt; negative_cutoff, -1, 0))
-    score = f1_score(labels_valid, predictions, average=&#x27;weighted&#x27;, zero_division=0)
-    if score &gt; best_score:
-        best_score = score
-        best_thresholds = (negative_cutoff, positive_cutoff)
-negative_cutoff, positive_cutoff = best_thresholds
-test_scores = y_pred_textblob_score.to_numpy()
-tuned_predictions = np.where(test_scores &gt; positive_cutoff, 1,
-                             np.where(test_scores &lt; negative_cutoff, -1, 0))
-print(&#x27;Validation-selected thresholds:&#x27;, best_thresholds)
-print(&#x27;Validation weighted F1:&#x27;, best_score)
-print(&#x27;Tuned test weighted F1:&#x27;, f1_score(y_test, tuned_predictions, average=&#x27;weighted&#x27;, zero_division=0))
-</pre></details><h2>Limitations and next steps</h2><p>- Emotion-to-sentiment mapping is subjective, particularly for surprise and empty.</p><p>- A random row split does not control for duplicate text or repeated authors across train and test.</p><p>- Preprocessing can remove negation and emoticons and retain mention text.</p><p>- Compare stratified and grouped splits, negation-preserving preprocessing, n-grams, TF-IDF, and class weighting using validation data.</p><p>- These results describe social-media text; performance on healthcare feedback has not been measured.</p><h2>Author</h2><p>Cameron Batts</p></main></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Multi-Class Sentiment Classification | Cameron Batts</title><style>body{margin:0;background:#f7f8fa;color:#152540;font:16px/1.65 system-ui}main{max-width:950px;margin:auto;padding:32px 24px}h1{font: bold 2.4rem Georgia}h2{border-bottom:2px solid #e8c97a;margin-top:36px}pre{padding:18px;background:white;border-left:3px solid #c9a84c;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}details{margin:16px 0}summary{cursor:pointer}table{width:100%;border-collapse:collapse;font-size:14px}td,th{text-align:left;padding:10px;border-bottom:1px solid #ddd}p{overflow-wrap:anywhere}a{color:#1a3560}</style><style>img{max-width:100%;height:auto}table{border-collapse:collapse;width:100%;margin:20px 0}th,td{padding:8px;border-bottom:1px solid #ccd3dc;text-align:left}pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:16px;background:#fff}a{color:#1a3560}figure{margin:24px 0}</style></head><body><main><a href="https://cameron-batts.github.io/">← Portfolio</a><h1>Multi-Class Sentiment Classification</h1>
+<p><strong>Author:</strong> Cameron Batts<br />
+<strong>Tools:</strong> Python · pandas · scikit-learn · NLTK · TextBlob</p>
+<h2>Validation update - October 22, 2026</h2>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th style="text-align:right">Accuracy</th>
+<th style="text-align:right">Macro F1</th>
+<th style="text-align:right">Weighted F1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Naive Bayes</td>
+<td style="text-align:right">0.5520</td>
+<td style="text-align:right">0.4778</td>
+<td style="text-align:right">0.5067</td>
+</tr>
+<tr>
+<td>Logistic regression</td>
+<td style="text-align:right">0.5605</td>
+<td style="text-align:right">0.5442</td>
+<td style="text-align:right">0.5581</td>
+</tr>
+<tr>
+<td>TextBlob fixed</td>
+<td style="text-align:right">0.4136</td>
+<td style="text-align:right">0.4006</td>
+<td style="text-align:right">0.3894</td>
+</tr>
+<tr>
+<td>TextBlob validation-selected</td>
+<td style="text-align:right">0.4823</td>
+<td style="text-align:right">0.4787</td>
+<td style="text-align:right">0.4782</td>
+</tr>
+</tbody>
+</table>
+<p>All 18 cells ran on 40,000 posts with 42,633 vocabulary features. Thresholds selected on training-derived validation data were -0.05 and 0.10. The tuned TextBlob weighted F1 was 0.4782; it improved on the fixed rule but remained below the trained classifiers. The original subjective labels, preprocessing and non-stratified split were retained. No patient-feedback outcome is claimed.</p>
+<p><a href="https://github.com/Cameron-Batts/Multiclass-Sentiment-Classification/blob/main/reports/validation_results.json">Aggregate validation record</a>. <a href="https://github.com/Cameron-Batts/Multiclass-Sentiment-Classification/blob/main/validation/rerun_analysis.py">Repeatable validation script</a>. Run <code>python validation/rerun_analysis.py</code> from the project root. Install <code>requirements-validation.txt</code> first; source CSVs stay local.</p>
+<h2>Business Problem</h2>
+<p>Classify short text into negative, neutral, and positive sentiment while retaining visibility into class-level errors. This project compares trained classifiers against a fixed lexicon-based baseline on public social-media data.</p>
+<h2>Project Approach</h2>
+<ul>
+<li>Map 13 emotion categories across 40,000 posts into three sentiment classes.</li>
+<li>Clean text and split 80/20 with random_state=42.</li>
+<li>Fit a 42,633-feature bag-of-words vocabulary on training text only.</li>
+<li>Compare Multinomial Naive Bayes, logistic regression and TextBlob on the same test split.</li>
+<li>Inspect per-class precision, recall, and F1 alongside weighted metrics.</li>
+</ul>
+<h2>Historical findings and original context</h2>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th style="text-align:right">Weighted precision</th>
+<th style="text-align:right">Weighted recall</th>
+<th style="text-align:right">Weighted F1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Naive Bayes</td>
+<td style="text-align:right">0.5324</td>
+<td style="text-align:right">0.5520</td>
+<td style="text-align:right">0.5067</td>
+</tr>
+<tr>
+<td>Logistic regression</td>
+<td style="text-align:right">0.5567</td>
+<td style="text-align:right">0.5604</td>
+<td style="text-align:right">0.5579</td>
+</tr>
+<tr>
+<td>TextBlob (±0.33)</td>
+<td style="text-align:right">0.5780</td>
+<td style="text-align:right">0.4136</td>
+<td style="text-align:right">0.3894</td>
+</tr>
+</tbody>
+</table>
+<p>Logistic regression improved weighted F1 by 0.0512 over Naive Bayes and improved neutral-class F1 from 0.1871 to 0.4057. Naive Bayes retained slightly higher negative-class F1. These are retained outputs from the original run, not newly computed results.</p>
+<h2>Reproduce</h2>
+<pre><code class="language-bash">python -m pip install -r requirements.txt
+jupyter lab notebooks/multiclass_sentiment_classification.ipynb
+</code></pre>
+<p>Place a permitted copy of <code>text_emotion.csv</code> in <code>data/</code>. Required columns: <code>sentiment</code>, <code>content</code>. NLTK downloads English stopwords at runtime. The raw dataset is not distributed here; author identifiers and saved text excerpts have been omitted. <code>data/emotion_counts.csv</code> contains aggregate label counts only.</p>
+<h2>Validation and Limitations</h2>
+<p>The cleaned workflow was re-executed; current aggregate metrics are recorded separately from the original reports. The threshold search was executed with separate positive/negative cutoffs selected on training-derived validation data; fresh test results are recorded. Tested numerical/NLP packages are recorded in requirements-validation.txt.</p>
+<p>The three-class label mapping is subjective. Negation/emoticons may be lost in preprocessing, username text may remain, and duplicate posts or authors can cross the random split. This is a social-media experiment, not measured patient-feedback performance.</p>
+<h2>Data Source</h2>
+<p>CrowdFlower: https://data.world/crowdflower/sentiment-analysis-in-text . Retain source attribution and observe applicable data terms.</p>
+<h2>Files</h2>
+<ul>
+<li><code>notebooks/multiclass_sentiment_classification.ipynb</code>: cleaned analysis and original numerical outputs.</li>
+<li><code>reports/multiclass_sentiment_classification.html</code>: readable report.</li>
+<li><code>reports/model_comparison.csv</code>: baseline test metrics.</li>
+<li><code>data/emotion_counts.csv</code>: aggregate original emotion counts.</li>
+<li><code>requirements.txt</code>: dependencies.</li>
+</ul>
+<p>GitHub: https://github.com/Cameron-Batts<br />
+Portfolio: https://cameron-batts.github.io</p>
+</main></body></html>
